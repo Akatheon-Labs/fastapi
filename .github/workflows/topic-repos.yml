@@ -1,9 +1,7 @@
 name: Update Topic Repos
 
 on:
-  schedule:
-    - cron: "0 12 1 * *"
-  workflow_dispatch:
+  workflow_dispatch: {}  # off on this showcase fork: upstream's CI runs upstream
 
 permissions: {}
 

@@ -1,9 +1,7 @@
 name: Smokeshow
 
 on:
-  workflow_run: # zizmor: ignore[dangerous-triggers]
-    workflows: [Test]
-    types: [completed]
+  workflow_dispatch: {}  # off on this showcase fork: upstream's CI runs upstream
 
 permissions: {}
 

@@ -1,9 +1,7 @@
 name: Publish
 
 on:
-  release:
-    types:
-      - published
+  workflow_dispatch: {}  # off on this showcase fork: upstream's CI runs upstream
 
 permissions: {}
 

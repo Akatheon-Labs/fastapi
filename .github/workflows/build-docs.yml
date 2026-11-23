@@ -1,9 +1,6 @@
 name: Build Docs
 on:
-  push:
-    branches:
-      - master
-  pull_request:
+  workflow_dispatch: {}  # off on this showcase fork: upstream's CI runs upstream
 permissions: {}
 
 jobs:

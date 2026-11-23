@@ -1,0 +1,89 @@
+# Akatheon Turbo showroom: a public fork of FastAPI. On every pull request the full suite and Akatheon Turbo run side
+# by side, and each job writes its table to the run's summary.
+#   push to akatheon-showcase: certificates for the new commit (the first time every test is recorded; after that only
+#                              what the merged change touched), kept in GitHub's cache
+#   pull_request:              full (the suite as CI runs it today) | shadow (everything runs; the summary shows what
+#                              Akatheon Turbo would have skipped, and whether that would have missed a failure) |
+#                              enforce (only the selected tests run; the job's result is theirs), each with its wall clock
+# The suites run offline: no model API key is set. Each Akatheon Turbo job uploads its signed receipt.
+name: akatheon-turbo-showcase
+on:
+  push:
+    branches: [akatheon-showcase]
+  pull_request:
+    branches: [akatheon-showcase]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: akatheon-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  TEST_CMD: .venv/bin/python -m pytest -p no:cacheprovider tests
+jobs:
+  certificates:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install (uv, Python 3.12, the tests group and every extra; the venv first on PATH, as uv run puts it)
+        run: uv sync --locked --no-dev --group tests --extra all --python 3.12 && echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - uses: akatheon/turbo@v1
+        with:
+          mode: refresh
+          command: ${{ env.TEST_CMD }}
+  full:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install (uv, Python 3.12, the tests group and every extra; the venv first on PATH, as uv run puts it)
+        run: uv sync --locked --no-dev --group tests --extra all --python 3.12 && echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - name: The full suite (as CI runs it today)
+        run: |
+          s=$(date +%s)
+          set +e; $TEST_CMD; rc=$?; set -e
+          { echo "### full suite"; echo; echo "| wall clock | exit |"; echo "|---|---|"; echo "| $(( $(date +%s) - s )) s | $rc |"; } >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
+  shadow:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install (uv, Python 3.12, the tests group and every extra; the venv first on PATH, as uv run puts it)
+        run: uv sync --locked --no-dev --group tests --extra all --python 3.12 && echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - uses: akatheon/turbo@v1
+        with:
+          mode: shadow
+          command: ${{ env.TEST_CMD }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: receipt-shadow
+          path: .akatheon-ci/receipt/
+          include-hidden-files: true  # the receipt sits under .akatheon-ci/; the signing key is outside it
+  enforce:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install (uv, Python 3.12, the tests group and every extra; the venv first on PATH, as uv run puts it)
+        run: uv sync --locked --no-dev --group tests --extra all --python 3.12 && echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - uses: akatheon/turbo@v1
+        with:
+          mode: enforce
+          command: ${{ env.TEST_CMD }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: receipt-enforce
+          path: .akatheon-ci/receipt/
+          include-hidden-files: true  # the receipt sits under .akatheon-ci/; the signing key is outside it

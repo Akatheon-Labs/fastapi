@@ -1,10 +1,6 @@
 name: Deploy Docs
 on:
-  workflow_run: # zizmor: ignore[dangerous-triggers]
-    workflows:
-      - Build Docs
-    types:
-      - completed
+  workflow_dispatch: {}  # off on this showcase fork: upstream's CI runs upstream
 
 permissions: {}
 

@@ -1,11 +1,7 @@
 name: Add to Project
 
 on:
-  pull_request_target: # zizmor: ignore[dangerous-triggers]
-  issues:
-    types:
-      - opened
-      - reopened
+  workflow_dispatch: {}  # off on this showcase fork: upstream's CI runs upstream
 
 permissions: {}
 

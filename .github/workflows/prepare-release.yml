@@ -1,20 +1,7 @@
 name: Prepare Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      bump:
-        description: Release bump
-        required: true
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
-      date:
-        description: Release date in YYYY-MM-DD format. Defaults to today.
-        required: false
-        type: string
+  workflow_dispatch: {}  # off on this showcase fork: upstream's CI runs upstream
 
 permissions: {}
 
