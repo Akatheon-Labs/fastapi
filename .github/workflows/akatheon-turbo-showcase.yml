@@ -2,6 +2,8 @@
 # by side, and each job writes its table to the run's summary.
 #   push to akatheon-showcase: certificates for the new commit (the first time every test is recorded; after that only
 #                              what the merged change touched), kept in GitHub's cache
+#   schedule (Mon, Thu):       the same certificates job, which reads the saved certificates first: GitHub deletes a cache
+#                              entry no run has read for 7 days, and a demo pull request without them would run every test
 #   pull_request:              full (the suite as CI runs it today) | shadow (everything runs; the summary shows what
 #                              Akatheon Turbo would have skipped, and whether that would have missed a failure) |
 #                              enforce (only the selected tests run; the job's result is theirs), each with its wall clock
@@ -13,6 +15,8 @@ on:
   pull_request:
     branches: [akatheon-showcase]
   workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1,4'  # Mondays and Thursdays, 06:00 UTC: see the header
 permissions:
   contents: read
 concurrency:
@@ -34,6 +38,8 @@ jobs:
         with:
           mode: refresh
           command: ${{ env.TEST_CMD }}
+          license-key: ${{ secrets.AKATHEON_CI_TOKEN }}  # this org's own key: Turbo sends the run's numeric summary to the dashboard
+          signing-key: ${{ secrets.AKATHEON_RECEIPT_KEY }}
   full:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
@@ -62,6 +68,8 @@ jobs:
         with:
           mode: shadow
           command: ${{ env.TEST_CMD }}
+          license-key: ${{ secrets.AKATHEON_CI_TOKEN }}  # this org's own key: Turbo sends the run's numeric summary to the dashboard
+          signing-key: ${{ secrets.AKATHEON_RECEIPT_KEY }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -81,6 +89,8 @@ jobs:
         with:
           mode: enforce
           command: ${{ env.TEST_CMD }}
+          license-key: ${{ secrets.AKATHEON_CI_TOKEN }}  # this org's own key: Turbo sends the run's numeric summary to the dashboard
+          signing-key: ${{ secrets.AKATHEON_RECEIPT_KEY }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
