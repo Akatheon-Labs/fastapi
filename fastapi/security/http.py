@@ -197,7 +197,7 @@ class HTTPBasic(HTTPBase):
         self.auto_error = auto_error
 
     def make_authenticate_headers(self) -> dict[str, str]:
-        if self.realm:
+        if self.realm is not None and self.realm:
             return {"WWW-Authenticate": f'Basic realm="{self.realm}"'}
         return {"WWW-Authenticate": "Basic"}
 
